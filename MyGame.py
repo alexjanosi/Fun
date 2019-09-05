@@ -79,20 +79,23 @@ class projectile(object):
 		self.facing = facing
 		self.vel = 8 * facing
 
-	def draw(win):
-		pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)
+	def draw(self, win):
+		if self.facing != 0:
+			pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)
 
 # redraws the window
 def redrawGameWindow():
 
 	win.blit(bg, (0,0))  
 	man.draw(win)
+	for bullet in bullets:
+		bullet.draw(win)
 	pygame.display.update() 
 	
 # create a character and start main loop
 man = player(50, 390, 70, 60)
 run = True
-
+bullets = []
 while run:
 	clock.tick(20)
 
@@ -101,11 +104,32 @@ while run:
 		if event.type == pygame.QUIT:
 			run = False
 
+	# add projectiles
+	for bullet in bullets:
+		if bullet.x < 500 and bullet.x > 0:
+			bullet.x += bullet.vel
+		else:
+			bullets.pop(bullets.index(bullet))
+
 	# get keys pressed
 	keys = pygame.key.get_pressed()
 	
 	# update according to actions
-	if keys[pygame.K_LEFT] and man.x > man.vel: 
+	if keys[pygame.K_SPACE]:
+		if man.left:
+			facing = -1
+		elif man.right:
+			facing = 1
+		else:
+			facing = 0
+
+		if len(bullets) < 10:
+			bullets.append(projectile(round(man.x + man.width // 2), round(man.y + man.height // 2),
+				6, (255, 0 , 0), facing))
+			
+		man.walkCount = 0
+
+	elif keys[pygame.K_LEFT] and man.x > man.vel: 
 		man.x -= man.vel
 		man.left = True
 		man.right = False
@@ -117,7 +141,13 @@ while run:
 		man.right = True
 		man.standCount = 0
 		
-	else: 
+	elif keys[pygame.K_DOWN]: 
+		man.walkCount = 0
+		man.left = False
+		man.right = False
+		man.stand = True
+
+	else:
 		man.walkCount = 0
 		
 	if not(man.isJump):
